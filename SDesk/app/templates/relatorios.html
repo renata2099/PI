@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+
+{% block title %}Relatorios - Sistema de Chamados{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4><i class="bi bi-graph-up me-2"></i>Relatorios e Estatisticas</h4>
+    <div>
+        <a href="{{ url_for('main.exportar_relatorio', formato='excel', **request.args) }}" class="btn btn-success">
+            <i class="bi bi-file-earmark-excel me-2"></i>Excel
+        </a>
+        <a href="{{ url_for('main.exportar_relatorio', formato='csv', **request.args) }}" class="btn btn-outline-secondary">
+            <i class="bi bi-filetype-csv me-2"></i>CSV
+        </a>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-light">
+        <h6 class="mb-0"><i class="bi bi-funnel me-2"></i>Filtros</h6>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('main.relatorios') }}">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Departamento</label>
+                    <select name="departamento" class="form-select">
+                        <option value="">Todos</option>
+                        {% for dept in departamentos %}
+                        <option value="{{ dept.id }}" {% if request.args.get('departamento')|int == dept.id %}selected{% endif %}>
+                            {{ dept.nome }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Status</label>
+                    <select name="status" class="form-select">
+                        <option value="">Todos</option>
+                        <option value="Aberto" {% if request.args.get('status') == 'Aberto' %}selected{% endif %}>Aberto</option>
+                        <option value="Em atendimento" {% if request.args.get('status') == 'Em atendimento' %}selected{% endif %}>Em atendimento</option>
+                        <option value="Aguardando usuario" {% if request.args.get('status') == 'Aguardando usuario' %}selected{% endif %}>Aguardando usuario</option>
+                        <option value="Resolvido" {% if request.args.get('status') == 'Resolvido' %}selected{% endif %}>Resolvido</option>
+                        <option value="Encerrado" {% if request.args.get('status') == 'Encerrado' %}selected{% endif %}>Encerrado</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Prioridade</label>
+                    <select name="prioridade" class="form-select">
+                        <option value="">Todas</option>
+                        <option value="Baixa" {% if request.args.get('prioridade') == 'Baixa' %}selected{% endif %}>Baixa</option>
+                        <option value="Media" {% if request.args.get('prioridade') == 'Media' %}selected{% endif %}>Media</option>
+                        <option value="Alta" {% if request.args.get('prioridade') == 'Alta' %}selected{% endif %}>Alta</option>
+                        <option value="Critica" {% if request.args.get('prioridade') == 'Critica' %}selected{% endif %}>Critica</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Data Inicio</label>
+                    <input type="date" name="data_inicio" class="form-control" value="{{ request.args.get('data_inicio', '') }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Data Fim</label>
+                    <input type="date" name="data_fim" class="form-control" value="{{ request.args.get('data_fim', '') }}">
+                </div>
+                <div class="col-md-1 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h3 class="mb-0">{{ stats.total }}</h3>
+                <small>Total de Chamados</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-dark">
+            <div class="card-body text-center">
+                <h3 class="mb-0">{{ stats.por_prioridade.get('Critica', 0) + stats.por_prioridade.get('Alta', 0) }}</h3>
+                <small>Criticos/Altos</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h3 class="mb-0">{{ stats.por_status.get('Resolvido', 0) + stats.por_status.get('Encerrado', 0) }}</h3>
+                <small>Resolvidos</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h3 class="mb-0">{{ stats.por_status.get('Aberto', 0) }}</h3>
+                <small>Pendentes</small>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-header">Por Status</div>
+            <div class="card-body">
+                {% for status, count in stats.por_status.items() %}
+                <div class="d-flex justify-content-between mb-2">
+                    <span>{{ status }}</span>
+                    <span class="badge bg-primary">{{ count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-header">Por Prioridade</div>
+            <div class="card-body">
+                {% for prio, count in stats.por_prioridade.items() %}
+                <div class="d-flex justify-content-between mb-2">
+                    <span>{{ prio }}</span>
+                    <span class="badge bg-warning text-dark">{{ count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card shadow-sm">
+            <div class="card-header">Por Departamento</div>
+            <div class="card-body">
+                {% for dept, count in stats.por_departamento.items() %}
+                <div class="d-flex justify-content-between mb-2">
+                    <span>{{ dept }}</span>
+                    <span class="badge bg-info">{{ count }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white">
+        <h6 class="mb-0">Chamados Detalhados ({{ chamados|length }} resultados)</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Titulo</th>
+                    <th>Status</th>
+                    <th>Prioridade</th>
+                    <th>Departamento</th>
+                    <th>Solicitante</th>
+                    <th>Atendente</th>
+                    <th>Data</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for c in chamados %}
+                <tr>
+                    <td>#{{ c.id }}</td>
+                    <td><a href="{{ url_for('main.ver_chamado', id=c.id) }}">{{ c.titulo[:30] }}...</a></td>
+                    <td><span class="badge bg-secondary">{{ c.status }}</span></td>
+                    <td>{{ c.prioridade }}</td>
+                    <td>{{ c.departamento.nome }}</td>
+                    <td>{{ c.solicitante.nome }}</td>
+                    <td>{{ c.atendente.nome if c.atendente else '-' }}</td>
+                    <td>{{ c.data_abertura.strftime('%d/%m/%Y') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

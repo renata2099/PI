@@ -1,0 +1,127 @@
+/* Estilos personalizados do Sistema de Chamados */
+
+:root {
+    --primary-color: #0d6efd;
+    --success-color: #198754;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+    --info-color: #0dcaf0;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+}
+
+/* Navbar */
+.navbar-brand {
+    font-size: 1.5rem;
+}
+
+/* Cards */
+.card {
+    border-radius: 10px;
+    transition: transform 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+/* Tabelas */
+.table-hover tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+    cursor: pointer;
+}
+
+/* Badges */
+.badge {
+    font-weight: 500;
+    padding: 0.5em 0.8em;
+}
+
+/* Chat/Interacoes */
+.chat-message {
+    max-width: 80%;
+    margin-bottom: 1rem;
+}
+
+.chat-message.own {
+    margin-left: auto;
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.chat-message.other {
+    background-color: #f1f3f4;
+}
+
+/* Dashboard Stats */
+.stat-card {
+    border-left: 4px solid var(--primary-color);
+}
+
+.stat-card.success {
+    border-left-color: var(--success-color);
+}
+
+.stat-card.warning {
+    border-left-color: var(--warning-color);
+}
+
+.stat-card.info {
+    border-left-color: var(--info-color);
+}
+
+/* Animações */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 15px;
+    }
+
+    .card-header h5 {
+        font-size: 1rem;
+    }
+
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+}
+
+/* Login Page */
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.login-box {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+/* Prioridades */
+.prioridade-critica { color: #dc3545; font-weight: bold; }
+.prioridade-alta { color: #fd7e14; }
+.prioridade-media { color: #0dcaf0; }
+.prioridade-baixa { color: #6c757d; }
+
+/* Status */
+.status-aberto { background-color: #ffc107; color: #000; }
+.status-em-atendimento { background-color: #0dcaf0; color: #fff; }
+.status-resolvido { background-color: #198754; color: #fff; }
+.status-encerrado { background-color: #6c757d; color: #fff; }

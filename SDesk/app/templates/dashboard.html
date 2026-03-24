@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Sistema de Chamados{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #0d6efd !important;">
+            <div class="card-body">
+                <h6 class="text-muted mb-1">Total de Chamados</h6>
+                <h3 class="mb-0">{{ stats.total }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #ffc107 !important;">
+            <div class="card-body">
+                <h6 class="text-muted mb-1">Abertos</h6>
+                <h3 class="mb-0">{{ stats.abertos }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #0dcaf0 !important;">
+            <div class="card-body">
+                <h6 class="text-muted mb-1">Em Atendimento</h6>
+                <h3 class="mb-0">{{ stats.em_atendimento }}</h3>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100" style="border-left: 4px solid #198754 !important;">
+            <div class="card-body">
+                <h6 class="text-muted mb-1">Resolvidos</h6>
+                <h3 class="mb-0">{{ stats.resolvidos }}</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Chamados Recentes</h5>
+                <a href="{{ url_for('main.novo_chamado') }}" class="btn btn-primary btn-sm">Novo</a>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Título</th>
+                            <th>Status</th>
+                            <th>Prioridade</th>
+                            <th>Departamento</th>
+                            <th>Atualizado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for chamado in chamados %}
+                        <tr onclick="window.location='{{ url_for('main.ver_chamado', id=chamado.id) }}'" style="cursor:pointer;">
+                            <td>#{{ chamado.id }}</td>
+                            <td>{{ chamado.titulo[:40] }}{% if chamado.titulo|length > 40 %}...{% endif %}</td>
+                            <td>{{ chamado.status }}</td>
+                            <td>{{ chamado.prioridade }}</td>
+                            <td>{{ chamado.departamento.nome if chamado.departamento else 'N/A' }}</td>
+                            <td>{{ chamado.data_atualizacao.strftime('%d/%m %H:%M') }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                Nenhum chamado encontrado
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">Por Departamento</h5>
+            </div>
+
+            <div class="card-body">
+                {% if dept_stats %}
+                
+                    {% set max_val = dept_stats.values()|max %}
+                    {% if max_val == 0 %}
+                        {% set max_val = 1 %}
+                    {% endif %}
+
+                    {% for dept, count in dept_stats.items() %}
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>{{ dept }}</span>
+                            <span>{{ count }}</span>
+                        </div>
+
+                        <div class="progress mb-3" style="height: 6px;">
+                            <div class="progress-bar" 
+                                 style="width: {{ (count / max_val * 100)|int }}%">
+                            </div>
+                        </div>
+                    {% endfor %}
+
+                {% else %}
+                    <p class="text-muted text-center">Nenhum dado disponível</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="card shadow-sm border-0 mt-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">Ações Rápidas</h5>
+            </div>
+
+            <div class="card-body">
+                <a href="{{ url_for('main.novo_chamado') }}" class="btn btn-outline-primary w-100 mb-2">
+                    Abrir Chamado
+                </a>
+
+                {% if current_user.is_atendente() %}
+                <a href="{{ url_for('main.relatorios') }}" class="btn btn-outline-success w-100">
+                    Ver Relatórios
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

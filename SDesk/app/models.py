@@ -48,8 +48,9 @@ class Usuario(UserMixin, db.Model):
     email = db.Column(db.String(100), nullable=False, unique=True)
     senha_hash = db.Column(db.String(255), nullable=False)
 
-    # compatibilidade (pode manter)
+    # compatibilidade com cadastro antigo de departamento unico
     departamento_id = db.Column(db.Integer, db.ForeignKey('departamentos.id'))
+    departamento = db.relationship('Departamento', foreign_keys=[departamento_id], lazy='joined')
 
     tipo_usuario = db.Column(db.String(20), default='comum')
     ativo = db.Column(db.Boolean, default=True)

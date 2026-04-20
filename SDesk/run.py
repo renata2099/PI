@@ -1,7 +1,8 @@
 from app import create_app, db
-from app.models import Usuario, Departamento, Chamado
 
 app = create_app('default')
+
+from app.models import Usuario, Departamento, Chamado  # 🔥 aqui
 
 @app.shell_context_processor
 def make_shell_context():

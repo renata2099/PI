@@ -19,8 +19,22 @@ class Departamento(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    usuarios = db.relationship('Usuario', backref='departamento', lazy=True)
     chamados = db.relationship('Chamado', backref='departamento', lazy=True)
+
+
+# =========================
+# USUARIO x DEPARTAMENTO (N:N)
+# =========================
+class UsuarioDepartamento(db.Model):
+    __tablename__ = 'usuarios_departamentos'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
+    departamento_id = db.Column(db.Integer, db.ForeignKey('departamentos.id'), nullable=False)
+
+    usuario = db.relationship('Usuario', backref='vinculos_departamentos')
+    departamento = db.relationship('Departamento', backref='usuarios_vinculados')
 
 
 # =========================
@@ -34,12 +48,11 @@ class Usuario(UserMixin, db.Model):
     email = db.Column(db.String(100), nullable=False, unique=True)
     senha_hash = db.Column(db.String(255), nullable=False)
 
-    # Departamento principal (compatibilidade)
+    # compatibilidade (pode manter)
     departamento_id = db.Column(db.Integer, db.ForeignKey('departamentos.id'))
 
-    tipo_usuario = db.Column(db.String(20), default='comum')  # comum, atendente, admin
+    tipo_usuario = db.Column(db.String(20), default='comum')
     ativo = db.Column(db.Boolean, default=True)
-
     receber_email = db.Column(db.Boolean, default=True)
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -69,14 +82,6 @@ class Usuario(UserMixin, db.Model):
 
     interacoes = db.relationship('Interacao', backref='usuario', lazy=True)
 
-    # 🔥 MULTI-DEPARTAMENTO (via tabela N:N)
-    departamentos_vinculados = db.relationship(
-        'UsuarioDepartamento',
-        backref='usuario_ref',
-        lazy=True,
-        cascade='all, delete-orphan'
-    )
-
     # MÉTODOS
     def set_password(self, password):
         self.senha_hash = generate_password_hash(password)
@@ -91,22 +96,7 @@ class Usuario(UserMixin, db.Model):
         return self.tipo_usuario in ['atendente', 'admin']
 
     def get_departamentos_ids(self):
-        return [v.departamento_id for v in self.departamentos_vinculados]
-
-
-# =========================
-# USUARIO x DEPARTAMENTO (N:N)
-# =========================
-class UsuarioDepartamento(db.Model):
-    __tablename__ = 'usuarios_departamentos'
-
-    id = db.Column(db.Integer, primary_key=True)
-
-    usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
-    departamento_id = db.Column(db.Integer, db.ForeignKey('departamentos.id'), nullable=False)
-
-    usuario = db.relationship('Usuario', overlaps="departamentos_vinculados,usuario_ref")
-    departamento = db.relationship('Departamento', backref='usuarios_vinculados')
+        return [v.departamento_id for v in self.vinculos_departamentos]
 
 
 # =========================
@@ -152,7 +142,6 @@ class Chamado(db.Model):
     data_fechamento = db.Column(db.DateTime, nullable=True)
 
     avaliacao = db.Column(db.Integer, nullable=True)
-
     tempo_resolucao_horas = db.Column(db.Float, nullable=True)
 
     interacoes = db.relationship(
@@ -198,7 +187,6 @@ class Interacao(db.Model):
     )
 
     mensagem = db.Column(db.Text, nullable=False)
-
     tipo = db.Column(db.String(20), default='comentario')
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

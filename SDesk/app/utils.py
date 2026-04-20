@@ -1,9 +1,15 @@
 from functools import wraps
-from flask import flash, redirect, url_for
+from flask import flash, redirect, url_for, current_app
 from flask_login import current_user
-from app.models import Chamado, Interacao, db
+from app.models import Chamado, Interacao, UsuarioDepartamento, db
 from datetime import datetime
+import smtplib
+from email.mime.text import MIMEText
 
+
+# =========================
+# PERMISSÕES
+# =========================
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -12,6 +18,7 @@ def admin_required(f):
             return redirect(url_for('main.dashboard'))
         return f(*args, **kwargs)
     return decorated_function
+
 
 def atendente_required(f):
     @wraps(f)
@@ -22,8 +29,13 @@ def atendente_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+
+# =========================
+# STATUS DO CHAMADO
+# =========================
 def atualizar_status_chamado(chamado_id, novo_status, usuario_id, mensagem=None):
     chamado = Chamado.query.get(chamado_id)
+
     if not chamado:
         return False
 
@@ -46,18 +58,30 @@ def atualizar_status_chamado(chamado_id, novo_status, usuario_id, mensagem=None)
 
     db.session.add(interacao)
     db.session.commit()
+
     return True
 
-def get_estatisticas(usuario=None):
-    from app.models import Chamado, Departamento
 
+# =========================
+# ESTATÍSTICAS (CORRIGIDO MULTI-DEPARTAMENTO)
+# =========================
+def get_estatisticas(usuario=None):
     query = Chamado.query
+
     if usuario and not usuario.is_admin():
+
         if usuario.is_atendente():
+            # 🔥 pega todos departamentos do usuário
+            dept_ids = [d.departamento_id for d in UsuarioDepartamento.query.filter_by(
+                usuario_id=usuario.id
+            ).all()]
+
             query = query.filter(
-                (Chamado.atendente_id == usuario.id) | 
-                (Chamado.departamento_id == usuario.departamento_id)
+                (Chamado.atendente_id == usuario.id) |
+                (Chamado.responsavel_id == usuario.id) |
+                (Chamado.departamento_id.in_(dept_ids))
             )
+
         else:
             query = query.filter_by(usuario_id=usuario.id)
 
@@ -72,3 +96,36 @@ def get_estatisticas(usuario=None):
         'em_atendimento': em_atendimento,
         'resolvidos': resolvidos
     }
+
+
+# =========================
+# 🔥 ENVIO DE EMAIL
+# =========================
+def enviar_email(destinatario, assunto, mensagem):
+    try:
+        from flask import current_app
+
+        mail_user = current_app.config.get('MAIL_USERNAME')
+        mail_pass = current_app.config.get('MAIL_PASSWORD')
+        mail_server = current_app.config.get('MAIL_SERVER')
+        mail_port = current_app.config.get('MAIL_PORT')
+
+        # 🔥 se não tiver config, simplesmente ignora (não quebra o sistema)
+        if not all([mail_user, mail_pass, mail_server, mail_port]):
+            print("Email não configurado. Pulando envio.")
+            return
+
+        msg = MIMEText(mensagem)
+        msg['Subject'] = assunto
+        msg['From'] = mail_user
+        msg['To'] = destinatario
+
+        with smtplib.SMTP(mail_server, mail_port) as server:
+            server.starttls()
+            server.login(mail_user, mail_pass)
+            server.send_message(msg)
+
+        print(f"Email enviado para {destinatario}")
+
+    except Exception as e:
+        print("Erro ao enviar email:", e)

@@ -17,43 +17,34 @@ Pandas
 
 
 testes
-
 USE SistemaChamados;
 GO
 
--- Passo 1: Transferir o schema db_owner para o dbo
-ALTER AUTHORIZATION ON SCHEMA::[db_owner] TO dbo;
-GO
+-- 1. Ver TODOS os schemas e seus donos
+SELECT 
+    s.name AS SchemaName,
+    dp.name AS OwnerName,
+    dp.principal_id
+FROM sys.schemas s
+JOIN sys.database_principals dp ON s.principal_id = dp.principal_id
+ORDER BY dp.name;
 
--- Passo 2: Agora remover o usuário (vai funcionar!)
-DROP USER pi_grp1;
-GO
+-- 2. Ver se o usuário pi_grp1 ainda existe no banco
+SELECT 
+    name,
+    principal_id,
+    type_desc,
+    authentication_type_desc
+FROM sys.database_principals 
+WHERE name = 'pi_grp1';
 
--- Passo 3: Ir para o banco master e remover o login
+-- 3. Ver se o login existe no servidor
 USE master;
 GO
-
-DROP LOGIN pi_grp1;
-GO
-
--- Passo 4: Recriar o login com senha nova
-CREATE LOGIN pi_grp1 WITH 
-    PASSWORD = 'P@ssw0rd2026!',
-    CHECK_POLICY = OFF,
-    CHECK_EXPIRATION = OFF,
-    DEFAULT_DATABASE = SistemaChamados;
-
-ALTER LOGIN pi_grp1 ENABLE;
-GO
-
--- Passo 5: Configurar no banco SistemaChamados
-USE SistemaChamados;
-GO
-
-CREATE USER pi_grp1 FOR LOGIN pi_grp1;
-
--- Dar permissões básicas
-ALTER ROLE db_datareader ADD MEMBER pi_grp1;
-ALTER ROLE db_datawriter ADD MEMBER pi_grp1;
-
-PRINT 'Login pi_grp1 recriado com sucesso! Senha: P@ssw0rd2026!';
+SELECT 
+    name,
+    principal_id,
+    is_disabled,
+    type_desc
+FROM sys.server_principals 
+WHERE name = 'pi_grp1';

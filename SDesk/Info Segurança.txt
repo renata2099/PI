@@ -17,46 +17,24 @@ Pandas
 
 
 testes
-
+-- ============================================
+-- PASSO 1: Ver usuários órfãos no banco
+-- ============================================
 USE SistemaChamados;
 GO
 
--- Passo 1: Remover das roles primeiro
-ALTER ROLE db_datareader DROP MEMBER pi_grp1;
-ALTER ROLE db_datawriter DROP MEMBER pi_grp1;
-PRINT 'Membro removido das roles';
-
--- Passo 2: Agora remover o usuário do banco
-DROP USER pi_grp1;
-PRINT 'Usuário removido do banco SistemaChamados';
-
--- Passo 3: Ir para master e remover o login
-USE master;
-GO
-
-DROP LOGIN pi_grp1;
-PRINT 'Login removido do servidor';
-
--- Passo 4: Recriar o login com senha nova
-CREATE LOGIN pi_grp1 WITH 
-    PASSWORD = 'P@ssw0rd2026!',
-    CHECK_POLICY = OFF,
-    CHECK_EXPIRATION = OFF,
-    DEFAULT_DATABASE = SistemaChamados;
-
-ALTER LOGIN pi_grp1 ENABLE;
-PRINT 'Login recriado';
-
--- Passo 5: Configurar no banco SistemaChamados
-USE SistemaChamados;
-GO
-
-CREATE USER pi_grp1 FOR LOGIN pi_grp1;
-PRINT 'Usuário criado no banco';
-
--- Dar permissões
-ALTER ROLE db_datareader ADD MEMBER pi_grp1;
-ALTER ROLE db_datawriter ADD MEMBER pi_grp1;
-PRINT 'Permissões concedidas';
-
-PRINT 'TUDO PRONTO! Use: pi_grp1 / P@ssw0rd2026!';
+SELECT 
+    dp.name AS UserName,
+    dp.sid AS UserSID,
+    sp.name AS LoginName,
+    sp.sid AS LoginSID,
+    CASE 
+        WHEN sp.sid IS NULL THEN 'ORFAO - Sem login no servidor!'
+        WHEN dp.sid <> sp.sid THEN 'SID DIFERENTE - Conflito!'
+        ELSE 'OK'
+    END AS Status
+FROM sys.database_principals dp
+LEFT JOIN master.sys.server_principals sp ON dp.name = sp.name
+WHERE dp.type IN ('S', 'U')  -- SQL Users e Windows Users
+  AND dp.name NOT IN ('public', 'guest', 'INFORMATION_SCHEMA', 'sys', 'dbo')
+  AND dp.name LIKE '%pi_grp%';

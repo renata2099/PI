@@ -3,5 +3,26 @@ Informações sistema
 Usuário SQL: pi_grp1
 Senha: C0c@C0l@
 
+
 E-mail: pigrp1.suporte@gmail.com
 Senha: C0c@C0l@
+
+bibliotecas Python
+Flask
+Flask_sqlalchemy
+Flask_login
+Dotenv
+Pyodbc
+Pandas
+
+
+testes
+
+-- Ver conexões ativas do login
+SELECT session_id, login_name, program_name, client_net_address
+FROM sys.dm_exec_sessions s
+JOIN sys.dm_exec_connections c ON s.session_id = c.session_id
+WHERE s.login_name = 'pi_grp1';
+
+-- Matar a sessão (substitua pelo session_id)
+KILL [session_id];

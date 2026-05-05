@@ -21,29 +21,42 @@ testes
 USE SistemaChamados;
 GO
 
--- Ver todos os schemas que ainda pertencem ao pi_grp1
-SELECT 
-    s.name AS SchemaName,
-    s.schema_id,
-    dp.name AS OwnerName,
-    dp.principal_id
-FROM sys.schemas s
-JOIN sys.database_principals dp ON s.principal_id = dp.principal_id
-WHERE dp.name = 'pi_grp1';
+-- Passo 1: Remover das roles primeiro
+ALTER ROLE db_datareader DROP MEMBER pi_grp1;
+ALTER ROLE db_datawriter DROP MEMBER pi_grp1;
+PRINT 'Membro removido das roles';
 
--- Ver se ele é membro de alguma role
-SELECT 
-    r.name AS RoleName,
-    m.name AS MemberName
-FROM sys.database_role_members rm
-JOIN sys.database_principals r ON rm.role_principal_id = r.principal_id
-JOIN sys.database_principals m ON rm.member_principal_id = m.principal_id
-WHERE m.name = 'pi_grp1';
+-- Passo 2: Agora remover o usuário do banco
+DROP USER pi_grp1;
+PRINT 'Usuário removido do banco SistemaChamados';
 
--- Ver objetos que ele possui (tabelas, procedures, etc.)
-SELECT 
-    SCHEMA_NAME(schema_id) AS SchemaName,
-    name AS ObjectName,
-    type_desc
-FROM sys.objects
-WHERE principal_id = 5;  -- principal_id do pi_grp1 no banco
+-- Passo 3: Ir para master e remover o login
+USE master;
+GO
+
+DROP LOGIN pi_grp1;
+PRINT 'Login removido do servidor';
+
+-- Passo 4: Recriar o login com senha nova
+CREATE LOGIN pi_grp1 WITH 
+    PASSWORD = 'P@ssw0rd2026!',
+    CHECK_POLICY = OFF,
+    CHECK_EXPIRATION = OFF,
+    DEFAULT_DATABASE = SistemaChamados;
+
+ALTER LOGIN pi_grp1 ENABLE;
+PRINT 'Login recriado';
+
+-- Passo 5: Configurar no banco SistemaChamados
+USE SistemaChamados;
+GO
+
+CREATE USER pi_grp1 FOR LOGIN pi_grp1;
+PRINT 'Usuário criado no banco';
+
+-- Dar permissões
+ALTER ROLE db_datareader ADD MEMBER pi_grp1;
+ALTER ROLE db_datawriter ADD MEMBER pi_grp1;
+PRINT 'Permissões concedidas';
+
+PRINT 'TUDO PRONTO! Use: pi_grp1 / P@ssw0rd2026!';

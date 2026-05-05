@@ -18,11 +18,42 @@ Pandas
 
 testes
 
--- Ver conexões ativas do login
-SELECT session_id, login_name, program_name, client_net_address
-FROM sys.dm_exec_sessions s
-JOIN sys.dm_exec_connections c ON s.session_id = c.session_id
-WHERE s.login_name = 'pi_grp1';
+USE SistemaChamados;
+GO
 
--- Matar a sessão (substitua pelo session_id)
-KILL [session_id];
+-- Passo 1: Transferir o schema db_owner para o dbo
+ALTER AUTHORIZATION ON SCHEMA::[db_owner] TO dbo;
+GO
+
+-- Passo 2: Agora remover o usuário (vai funcionar!)
+DROP USER pi_grp1;
+GO
+
+-- Passo 3: Ir para o banco master e remover o login
+USE master;
+GO
+
+DROP LOGIN pi_grp1;
+GO
+
+-- Passo 4: Recriar o login com senha nova
+CREATE LOGIN pi_grp1 WITH 
+    PASSWORD = 'P@ssw0rd2026!',
+    CHECK_POLICY = OFF,
+    CHECK_EXPIRATION = OFF,
+    DEFAULT_DATABASE = SistemaChamados;
+
+ALTER LOGIN pi_grp1 ENABLE;
+GO
+
+-- Passo 5: Configurar no banco SistemaChamados
+USE SistemaChamados;
+GO
+
+CREATE USER pi_grp1 FOR LOGIN pi_grp1;
+
+-- Dar permissões básicas
+ALTER ROLE db_datareader ADD MEMBER pi_grp1;
+ALTER ROLE db_datawriter ADD MEMBER pi_grp1;
+
+PRINT 'Login pi_grp1 recriado com sucesso! Senha: P@ssw0rd2026!';

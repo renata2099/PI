@@ -17,34 +17,33 @@ Pandas
 
 
 testes
+
 USE SistemaChamados;
 GO
 
--- 1. Ver TODOS os schemas e seus donos
+-- Ver todos os schemas que ainda pertencem ao pi_grp1
 SELECT 
     s.name AS SchemaName,
+    s.schema_id,
     dp.name AS OwnerName,
     dp.principal_id
 FROM sys.schemas s
 JOIN sys.database_principals dp ON s.principal_id = dp.principal_id
-ORDER BY dp.name;
+WHERE dp.name = 'pi_grp1';
 
--- 2. Ver se o usuário pi_grp1 ainda existe no banco
+-- Ver se ele é membro de alguma role
 SELECT 
-    name,
-    principal_id,
-    type_desc,
-    authentication_type_desc
-FROM sys.database_principals 
-WHERE name = 'pi_grp1';
+    r.name AS RoleName,
+    m.name AS MemberName
+FROM sys.database_role_members rm
+JOIN sys.database_principals r ON rm.role_principal_id = r.principal_id
+JOIN sys.database_principals m ON rm.member_principal_id = m.principal_id
+WHERE m.name = 'pi_grp1';
 
--- 3. Ver se o login existe no servidor
-USE master;
-GO
+-- Ver objetos que ele possui (tabelas, procedures, etc.)
 SELECT 
-    name,
-    principal_id,
-    is_disabled,
+    SCHEMA_NAME(schema_id) AS SchemaName,
+    name AS ObjectName,
     type_desc
-FROM sys.server_principals 
-WHERE name = 'pi_grp1';
+FROM sys.objects
+WHERE principal_id = 5;  -- principal_id do pi_grp1 no banco

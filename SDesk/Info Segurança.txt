@@ -4,8 +4,8 @@ Usuário SQL: pi_grp1
 Senha: C0c@C0l@
 
 
-E-mail: pigrp1.suporte@gmail.com
-Senha: C0c@C0l@
+E-mail: pigrp1.suporte@zohomail.com
+Senha: C0c@C0l@2026
 
 bibliotecas Python
 Flask
@@ -15,24 +15,3 @@ Dotenv
 Pyodbc
 Pandas
 
-
-testes
-
-
--- 1. Ver modo de autenticação
-EXEC xp_loginconfig 'login mode';
-
--- 2. Ver se o login está bloqueado ou expirado
-SELECT 
-    name,
-    is_disabled,
-    LOGINPROPERTY(name, 'IsLocked') AS IsLocked,
-    LOGINPROPERTY(name, 'IsExpired') AS IsExpired,
-    LOGINPROPERTY(name, 'LockoutTime') AS LockoutTime,
-    LOGINPROPERTY(name, 'BadPasswordCount') AS BadPasswordCount,
-    LOGINPROPERTY(name, 'PasswordLastSetTime') AS PasswordLastSet
-FROM sys.sql_logins
-WHERE name = 'pi_grp1';
-
--- 3. Ver log de erros detalhado
-EXEC xp_readerrorlog 0, 1, N'18456', N'pi_grp1';
